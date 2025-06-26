@@ -1,0 +1,50 @@
+<!-- Privacy-focused analytics - Plausible Analytics -->
+<!-- Replace 'yourdomain.com' with your actual domain -->
+<script defer data-domain="yourdomain.com" src="https://plausible.io/js/script.js"></script>
+
+<!-- Alternative: Simple self-hosted analytics -->
+<!--
+<script>
+  // Simple privacy-focused page view tracking
+  if (!navigator.doNotTrack && !window.localStorage.getItem('opt-out-analytics')) {
+    fetch('/api/analytics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        page: window.location.pathname,
+        referrer: document.referrer,
+        timestamp: new Date().toISOString()
+      })
+    }).catch(() => {}); // Silently fail if analytics unavailable
+  }
+</script>
+-->
+
+<!-- GDPR-compliant analytics notice -->
+<!--
+<div id="analytics-notice" style="position: fixed; bottom: 20px; left: 20px; right: 20px; background: #f8f8f8; padding: 15px; border-radius: 5px; font-size: 14px; z-index: 1000; display: none;">
+  <p>This site uses privacy-focused analytics to understand how visitors use the site. No personal data is collected or stored. 
+  <button onclick="acceptAnalytics()" style="margin-left: 10px; padding: 5px 10px;">Accept</button>
+  <button onclick="declineAnalytics()" style="margin-left: 5px; padding: 5px 10px;">Decline</button>
+  </p>
+</div>
+
+<script>
+  function acceptAnalytics() {
+    localStorage.setItem('analytics-consent', 'true');
+    document.getElementById('analytics-notice').style.display = 'none';
+    // Initialize analytics here
+  }
+  
+  function declineAnalytics() {
+    localStorage.setItem('analytics-consent', 'false');
+    localStorage.setItem('opt-out-analytics', 'true');
+    document.getElementById('analytics-notice').style.display = 'none';
+  }
+  
+  // Show notice if no consent given
+  if (!localStorage.getItem('analytics-consent')) {
+    document.getElementById('analytics-notice').style.display = 'block';
+  }
+</script>
+-->
