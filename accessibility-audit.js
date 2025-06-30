@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const getContrast = require('get-contrast');
 
 // Accessibility audit configuration
 const config = {
@@ -152,6 +153,28 @@ const checks = {
     }
     
     return issues;
+  },
+  
+  // Check colour contrast for inline styled text against white background
+  checkColorContrast: (html) => {
+    const issues = [];
+    // matches elements with inline color style and inner text longer than 3 chars
+    const regex = /<([a-z]+)([^>]*?)style="[^"]*color:\s*([^;\"]+)[^"]*"[^>]*>([^<]{3,})<\/\1>/gi;
+    let match;
+    while ((match = regex.exec(html)) !== null) {
+      const [, tag, , colour, text] = match;
+      const ratio = getContrast.ratio(colour.trim(), '#ffffff'); // assumes white bg
+      if (ratio < 4.5) {
+        issues.push({
+          severity: 'warning',
+          rule: 'color-contrast',
+          message: `Low contrast (${ratio.toFixed(2)}:1) for ${tag} text`,
+          element: match[0],
+          line: getLineNumber(html, match[0])
+        });
+      }
+    }
+    return issues;
   }
 };
 
@@ -219,7 +242,8 @@ function generateReport(results) {
       'Provide accessible labels for all form inputs',
       'Use sufficient color contrast (4.5:1 for normal text)',
       'Include skip links for keyboard navigation',
-      'Test with screen readers and keyboard-only navigation'
+      'Test with screen readers and keyboard-only navigation',
+      'Check colour contrast for inline styled text'
     ]
   };
   

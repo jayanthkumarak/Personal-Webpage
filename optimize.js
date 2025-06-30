@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const csso = require('csso');
 
 // Configuration
 const config = {
@@ -12,17 +13,7 @@ const config = {
 
 // Simple CSS minification
 function minifyCSS(css) {
-  return css
-    // Remove comments
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    // Remove extra whitespace
-    .replace(/\s+/g, ' ')
-    // Remove whitespace around certain characters
-    .replace(/\s*([{}:;,>+~])\s*/g, '$1')
-    // Remove trailing semicolons before closing braces
-    .replace(/;}/g, '}')
-    // Remove leading/trailing whitespace
-    .trim();
+  return csso.minify(css).css;
 }
 
 // Simple HTML minification
