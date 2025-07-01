@@ -9,7 +9,7 @@ A fast, minimalist personal website and blog built with a custom static site gen
 npm install
 
 # Build the site
-npm run build:multimedia
+npm run build:master
 
 # Preview locally
 npm run serve:dist
