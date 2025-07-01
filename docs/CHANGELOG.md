@@ -1,5 +1,31 @@
 # Changelog
 
+## [2025-01-07] Repository Cleanup & Professional Organization
+
+### Changed
+- **Complete Repository Restructure**
+  - Moved all scripts to `/scripts/{build,utils}` directory structure
+  - Moved all styles to `/styles` directory
+  - Updated all internal paths and imports to use new structure
+  - Removed build artifacts from version control
+- **Professional Configuration**
+  - Added `.eslintrc.json` for code quality
+  - Added `.prettierrc` for consistent formatting
+  - Added `.editorconfig` for cross-editor consistency
+  - Added `jest.config.js` with coverage thresholds
+  - Enhanced `.gitignore` with comprehensive patterns
+- **Project Documentation**
+  - Added `LICENSE` (MIT)
+  - Added `CONTRIBUTING.md` with guidelines
+  - Added `SECURITY.md` for responsible disclosure
+  - Added `PROJECT_STRUCTURE.md` documenting organization
+
+### Removed
+- Deleted generated `dist/` directory
+- Deleted redundant `articles/` directory
+- Deleted static `index.html` from root
+- Removed parent directory eslint config
+
 ## [2025-01-07] Documentation Consolidation
 
 ### Changed

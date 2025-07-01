@@ -4,7 +4,7 @@ const csso = require('csso');
 
 // Configuration
 const config = {
-  distDir: 'dist',
+  distDir: path.join(__dirname, '../../dist'),
   minifyCSS: true,
   optimizeHTML: true,
   generateSitemap: true,

@@ -4,7 +4,7 @@ const getContrast = require('get-contrast');
 
 // Accessibility audit configuration
 const config = {
-  distDir: 'dist',
+  distDir: path.join(__dirname, '../../dist'),
   generateReport: true
 };
 

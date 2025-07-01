@@ -1,4 +1,13 @@
-const { getAllPosts } = require('../build');
+// Mock console to suppress output during tests
+beforeAll(() => {
+  jest.spyOn(console, 'log').mockImplementation(() => {});
+});
+
+afterAll(() => {
+  console.log.mockRestore();
+});
+
+const { getAllPosts } = require('../scripts/build/build-multimedia');
 
 test('posts are ordered latest→oldest', () => {
   const posts = getAllPosts();

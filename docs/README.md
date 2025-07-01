@@ -13,6 +13,7 @@ Welcome to the Personal Website project documentation. This directory contains a
 - [Architecture Overview](./technical/ARCHITECTURE.md) - System design and components
 - [Build System](./technical/BUILD_SYSTEM.md) - How the static site generator works
 - [Multimedia Support](./technical/MULTIMEDIA.md) - Image and video implementation
+- [Project Structure](./PROJECT_STRUCTURE.md) - Directory organization and conventions
 
 ### 📋 Planning & Design
 - [Project Roadmap](./planning/ROADMAP.md) - Current and future development plans

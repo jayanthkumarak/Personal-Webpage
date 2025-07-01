@@ -2,46 +2,19 @@ const fs = require('fs');
 const path = require('path');
 const MarkdownIt = require('markdown-it');
 const markdownItAnchor = require('markdown-it-anchor');
-const markdownItContainer = require('markdown-it-container');
 const fm = require('front-matter');
 const { format } = require('date-fns');
-const sharp = require('sharp');
 
-// Initialize markdown parser with multimedia support
+// Initialize markdown parser
 const md = new MarkdownIt({
   html: true,
   linkify: true,
   typographer: true
-})
-.use(markdownItAnchor, {
+}).use(markdownItAnchor, {
   permalink: markdownItAnchor.permalink.linkInsideHeader({
     symbol: '#',
     renderAttrs: () => ({ 'aria-hidden': 'true' })
   })
-})
-.use(markdownItContainer, 'youtube', {
-  validate: function(params) {
-    return params.trim().match(/^youtube$/);
-  },
-  render: function(tokens, idx) {
-    if (tokens[idx].nesting === 1) {
-      // Get the YouTube video ID from the next line
-      const videoId = tokens[idx + 2].content.trim();
-      return `
-        <div class="video-wrapper">
-          <iframe
-            src="https://www.youtube-nocookie.com/embed/${videoId}"
-            title="YouTube video player"
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen
-            loading="lazy">
-          </iframe>
-        </div>`;
-    } else {
-      return '';
-    }
-  }
 });
 
 // Configuration
@@ -51,9 +24,7 @@ const config = {
   templatesDir: 'templates',
   siteUrl: 'https://jayanthkumar.com',
   siteName: 'Jayanth Kumar',
-  siteDescription: 'Security consultant specializing in Azure and Microsoft 365 environments',
-  imageSizes: [400, 800, 1200],
-  imageFormats: ['webp', 'jpeg']
+  siteDescription: 'Security consultant specializing in Azure and Microsoft 365 environments'
 };
 
 // Ensure directories exist
@@ -63,160 +34,34 @@ function ensureDir(dir) {
   }
 }
 
-// Process images in a post
-async function processPostImages(postDir, slug) {
-  const imagesDir = path.join(postDir, 'images');
-  const outputImagesDir = path.join(config.outputDir, 'articles', slug, 'images');
-  
-  if (!fs.existsSync(imagesDir)) {
-    return;
-  }
-  
-  ensureDir(outputImagesDir);
-  
-  const imageFiles = fs.readdirSync(imagesDir)
-    .filter(file => /\.(jpg|jpeg|png|webp)$/i.test(file));
-  
-  for (const imageFile of imageFiles) {
-    const inputPath = path.join(imagesDir, imageFile);
-    const baseName = path.basename(imageFile, path.extname(imageFile));
-    
-    // Generate multiple sizes and formats
-    for (const width of config.imageSizes) {
-      for (const format of config.imageFormats) {
-        const outputName = `${baseName}-${width}w.${format}`;
-        const outputPath = path.join(outputImagesDir, outputName);
-        
-        try {
-          await sharp(inputPath)
-            .resize(width, null, {
-              withoutEnlargement: true,
-              fit: 'inside'
-            })
-            .toFormat(format, {
-              quality: format === 'webp' ? 85 : 90
-            })
-            .toFile(outputPath);
-          
-          console.log(`  Generated: ${outputName}`);
-        } catch (err) {
-          console.error(`  Error processing ${imageFile}: ${err.message}`);
-        }
-      }
-    }
-    
-    // Copy original as fallback
-    fs.copyFileSync(inputPath, path.join(outputImagesDir, imageFile));
-  }
-}
-
-// Custom image renderer for responsive images
-const defaultImageRenderer = md.renderer.rules.image;
-md.renderer.rules.image = function(tokens, idx, options, env, renderer) {
-  const token = tokens[idx];
-  const src = token.attrGet('src');
-  const alt = token.content;
-  const title = token.attrGet('title');
-  
-  // Only process local images
-  if (!src || src.startsWith('http')) {
-    return defaultImageRenderer(tokens, idx, options, env, renderer);
-  }
-  
-  // Extract filename and generate srcset
-  const imageName = path.basename(src);
-  const baseName = path.basename(imageName, path.extname(imageName));
-  const ext = path.extname(imageName).slice(1);
-  
-  // Build srcset for WebP
-  const webpSrcset = config.imageSizes
-    .map(size => `./images/${baseName}-${size}w.webp ${size}w`)
-    .join(', ');
-  
-  // Build srcset for JPEG fallback
-  const jpegSrcset = config.imageSizes
-    .map(size => `./images/${baseName}-${size}w.jpeg ${size}w`)
-    .join(', ');
-  
-  // Generate picture element with responsive images
-  let html = '<picture>';
-  html += `<source type="image/webp" srcset="${webpSrcset}">`;
-  html += `<source type="image/jpeg" srcset="${jpegSrcset}">`;
-  html += `<img src="${src}" alt="${alt}"`;
-  if (title) {
-    html += ` title="${title}"`;
-  }
-  html += ' loading="lazy" decoding="async">';
-  html += '</picture>';
-  
-  if (title) {
-    html = `<figure>${html}<figcaption>${title}</figcaption></figure>`;
-  }
-  
-  return html;
-};
-
-// Read and parse markdown file (updated for new structure)
-async function parseMarkdownFile(filePath) {
-  let content, markdownPath;
-  
-  // Check if it's a directory with index.md or a standalone .md file
-  if (fs.statSync(filePath).isDirectory()) {
-    markdownPath = path.join(filePath, 'index.md');
-    if (!fs.existsSync(markdownPath)) {
-      return null;
-    }
-  } else {
-    markdownPath = filePath;
-  }
-  
-  content = fs.readFileSync(markdownPath, 'utf8');
+// Read and parse markdown file
+function parseMarkdownFile(filePath) {
+  const content = fs.readFileSync(filePath, 'utf8');
   const { attributes, body } = fm(content);
-  
-  const slug = fs.statSync(filePath).isDirectory() 
-    ? path.basename(filePath)
-    : path.basename(filePath, '.md');
-  
-  // Process images if post is in a directory
-  if (fs.statSync(filePath).isDirectory()) {
-    await processPostImages(filePath, slug);
-  }
   
   return {
     ...attributes,
     content: md.render(body),
-    slug: slug,
+    slug: path.basename(filePath, '.md'),
     filename: filePath
   };
 }
 
-// Get all posts (updated for new structure)
-async function getAllPosts() {
+// Get all posts
+function getAllPosts() {
   if (!fs.existsSync(config.postsDir)) {
     console.log(`Posts directory ${config.postsDir} not found. Creating it...`);
     ensureDir(config.postsDir);
     return [];
   }
 
-  const items = fs.readdirSync(config.postsDir);
-  const posts = [];
-  
-  for (const item of items) {
-    const itemPath = path.join(config.postsDir, item);
-    const stat = fs.statSync(itemPath);
-    
-    // Handle both directories with index.md and standalone .md files
-    if (stat.isDirectory() || (stat.isFile() && item.endsWith('.md'))) {
-      const post = await parseMarkdownFile(itemPath);
-      if (post) {
-        posts.push(post);
-      }
-    }
-  }
-  
-  // Sort by date
-  posts.sort((a, b) => new Date(b.date) - new Date(a.date));
-  
+  const files = fs.readdirSync(config.postsDir)
+    .filter(file => file.endsWith('.md'))
+    .map(file => path.join(config.postsDir, file));
+
+  const posts = files.map(parseMarkdownFile)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
   return posts;
 }
 
@@ -356,26 +201,30 @@ function generateRSSFeed(posts) {
 
 // Copy static assets
 function copyStaticAssets() {
-  const staticFiles = ['styles.css', 'archive-styles.css', 'multimedia-styles.css'];
+  const staticFiles = [
+    path.join(__dirname, '../../styles/styles.css'),
+    path.join(__dirname, '../../styles/archive-styles.css')
+  ];
   
   staticFiles.forEach(file => {
     if (fs.existsSync(file)) {
-      fs.copyFileSync(file, path.join(config.outputDir, file));
-      console.log(`Copied: ${file}`);
+      const basename = path.basename(file);
+      fs.copyFileSync(file, path.join(config.outputDir, basename));
+      console.log(`Copied: ${basename}`);
     }
   });
 }
 
 // Main build function
-async function build() {
-  console.log('🚀 Building site with multimedia support...');
+function build() {
+  console.log('🚀 Building site...');
   
   // Ensure output directory exists
   ensureDir(config.outputDir);
   ensureDir(config.templatesDir);
   
   // Get all posts
-  const posts = await getAllPosts();
+  const posts = getAllPosts();
   console.log(`Found ${posts.length} posts`);
   
   // Generate pages
@@ -394,10 +243,7 @@ async function build() {
 
 // Run build
 if (require.main === module) {
-  build().catch(err => {
-    console.error('Build failed:', err);
-    process.exit(1);
-  });
+  build();
 }
 
-module.exports = { build, getAllPosts }; 
+module.exports = { build, getAllPosts };
