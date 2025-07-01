@@ -284,7 +284,31 @@ function generatePerformanceReport() {
   }
 }
 
-// Main optimization function
+/**
+ * Optimize the generated static site inside the `dist/` directory.
+ *
+ * This helper performs the following tasks:
+ * 1. Minifies all CSS and HTML assets.
+ * 2. Injects modern security headers into every HTML page.
+ * 3. Adds SEO-friendly structured data to the homepage.
+ * 4. Generates `sitemap.xml` and `robots.txt` (configurable).
+ * 5. Writes a performance-budget report highlighting total page weight.
+ *
+ * Typical CLI usage:
+ * ```bash
+ * # Run after the build step
+ * node optimize.js
+ * ```
+ *
+ * Programmatic usage:
+ * ```js
+ * const { optimize } = require('./optimize');
+ * optimize(); // writes optimised files to disk
+ * ```
+ *
+ * @function optimize
+ * @returns {void} Writes optimised files and reports to the filesystem as side-effects.
+ */
 function optimize() {
   console.log('🚀 Optimizing site...');
   

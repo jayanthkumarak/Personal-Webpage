@@ -16,6 +16,7 @@ This document provides detailed technical information about the implementation, 
 8. [Security Measures](#security-measures)
 9. [Development Tools](#development-tools)
 10. [Deployment Architecture](#deployment-architecture)
+11. [Public API Reference](#public-api-reference)
 
 ## Build System Architecture
 
@@ -588,6 +589,77 @@ Example Netlify configuration:
 - Google Analytics (with privacy considerations)
 - Self-hosted analytics
 - No-tracking default approach
+
+## Public API Reference
+
+> The project intentionally exposes a *very small* surface-area. All exported functions live in the root-level Node scripts and can be consumed either from the command-line **or** programmatically from another Node process or test harness.
+
+| Module | Function | Description |
+|--------|----------|-------------|
+| `build.js` | `build()` | Static-site generator – converts Markdown + templates into a production-ready site inside `dist/`. |
+| `build.js` | `getAllPosts()` | Utility that returns a parsed, sorted array of post objects (front-matter + rendered HTML). |
+| `build-multimedia.js` | `build()` | Multimedia-enabled build pipeline that additionally handles responsive images and embedded content. |
+| `build-multimedia.js` | `getAllPosts()` | Same contract as `build.js#getAllPosts` but returns a Promise because image processing is async. |
+| `optimize.js` | `optimize()` | Post-build optimiser – minifies assets, injects security headers, generates sitemap/robots, and writes a performance report. |
+| `accessibility-audit.js` | `audit()` | Runs a WCAG-inspired audit over the built site and writes JSON + Markdown reports. |
+
+### Usage Patterns
+
+#### 1. Command-line (recommended for everyday work)
+```bash
+# Development build with live preview
+node build.js && python3 -m http.server 8000
+
+# Full production pipeline
+node build.js && node optimize.js && node accessibility-audit.js
+```
+
+#### 2. Programmatic usage
+```js
+const { build } = require('./build');
+const { optimize } = require('./optimize');
+const { audit } = require('./accessibility-audit');
+
+build();            // synchronous
+optimize();         // synchronous
+audit();            // synchronous
+
+// Multimedia build (async)
+const { build: buildMedia } = require('./build-multimedia');
+(async () => {
+  await buildMedia();
+})();
+```
+
+### Function Signatures
+
+```ts
+// build.js
+export function build(): void;
+export function getAllPosts(): Post[];
+
+// build-multimedia.js
+export async function build(): Promise<void>;
+export async function getAllPosts(): Promise<Post[]>;
+
+// optimize.js
+export function optimize(): void;
+
+// accessibility-audit.js
+export function audit(): void;
+
+interface Post {
+  title: string;
+  date: string;      // ISO-8601
+  description?: string;
+  excerpt?: string;
+  content: string;   // Rendered HTML
+  slug: string;
+  filename: string;  // Original path
+}
+```
+
+These minimal signatures ensure you can import the tooling into custom build steps, test suites, or deployment hooks without bringing along any additional dependencies.
 
 ## Conclusion
 

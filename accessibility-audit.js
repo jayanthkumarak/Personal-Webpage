@@ -294,7 +294,26 @@ function generateReport(results) {
   return report;
 }
 
-// Main audit function
+/**
+ * Run a comprehensive WCAG-inspired audit against every HTML file in
+ * the `dist/` directory. A JSON and a human-readable Markdown report
+ * are written to disk and a high-level summary is printed to the
+ * console.
+ *
+ * CLI usage:
+ * ```bash
+ * node accessibility-audit.js
+ * ```
+ *
+ * Programmatic usage:
+ * ```js
+ * const { audit } = require('./accessibility-audit');
+ * audit();
+ * ```
+ *
+ * @function audit
+ * @returns {void}
+ */
 function audit() {
   console.log('🔍 Running accessibility audit...');
   

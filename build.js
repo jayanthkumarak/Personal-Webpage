@@ -47,7 +47,32 @@ function parseMarkdownFile(filePath) {
   };
 }
 
-// Get all posts
+/**
+ * Scan the `posts/` directory, parse front-matter & markdown, and
+ * return an array of post objects ordered by publication date
+ * (newest first).
+ *
+ * Each returned object has at minimum the following shape:
+ * ```ts
+ * {
+ *   title: string;
+ *   date: string;   // ISO-8601 string
+ *   content: string; // rendered HTML
+ *   slug: string;
+ *   filename: string; // absolute path on disk
+ * }
+ * ```
+ *
+ * Example:
+ * ```js
+ * const { getAllPosts } = require('./build');
+ * const posts = getAllPosts();
+ * console.log(`Total posts: ${posts.length}`);
+ * ```
+ *
+ * @function getAllPosts
+ * @returns {Array<Object>} Parsed post metadata and rendered HTML.
+ */
 function getAllPosts() {
   if (!fs.existsSync(config.postsDir)) {
     console.log(`Posts directory ${config.postsDir} not found. Creating it...`);
@@ -211,7 +236,28 @@ function copyStaticAssets() {
   });
 }
 
-// Main build function
+/**
+ * Primary entry-point for the static-site generator. Executes the full
+ * build pipeline:
+ * 1. Retrieves & processes markdown posts.
+ * 2. Generates individual post pages, archive, homepage and RSS feed.
+ * 3. Copies static assets into the `dist/` directory.
+ *
+ * Typical CLI usage:
+ * ```bash
+ * node build.js            # Development build
+ * node build.js && node optimize.js && node accessibility-audit.js  # Production build
+ * ```
+ *
+ * Programmatic usage:
+ * ```js
+ * const { build } = require('./build');
+ * build();
+ * ```
+ *
+ * @function build
+ * @returns {void}
+ */
 function build() {
   console.log('🚀 Building site...');
   

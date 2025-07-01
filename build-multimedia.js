@@ -190,7 +190,23 @@ async function parseMarkdownFile(filePath) {
   };
 }
 
-// Get all posts (updated for new structure)
+/**
+ * Discover and parse all posts (both standalone `.md` files and
+ * directory-based posts containing an `index.md`) within the `posts/`
+ * folder. In addition to converting markdown to HTML, this variant also
+ * prepares responsive images for each post.
+ *
+ * Example:
+ * ```js
+ * const { getAllPosts } = require('./build-multimedia');
+ * const posts = await getAllPosts();
+ * console.log(posts.map(p => p.slug));
+ * ```
+ *
+ * @async
+ * @function getAllPosts
+ * @returns {Promise<Array<Object>>} A promise resolving to an array of enriched post objects.
+ */
 async function getAllPosts() {
   if (!fs.existsSync(config.postsDir)) {
     console.log(`Posts directory ${config.postsDir} not found. Creating it...`);
@@ -366,7 +382,26 @@ function copyStaticAssets() {
   });
 }
 
-// Main build function
+/**
+ * Multimedia-aware build pipeline entry-point. Performs a full static
+ * site generation with responsive image processing and multimedia
+ * markdown containers (e.g. YouTube embeds).
+ *
+ * CLI usage:
+ * ```bash
+ * node build-multimedia.js   # Generates the site with image assets
+ * ```
+ *
+ * Programmatic usage:
+ * ```js
+ * const { build } = require('./build-multimedia');
+ * build().then(() => console.log('Done!'));
+ * ```
+ *
+ * @async
+ * @function build
+ * @returns {Promise<void>} Resolves when the build is complete.
+ */
 async function build() {
   console.log('🚀 Building site with multimedia support...');
   
