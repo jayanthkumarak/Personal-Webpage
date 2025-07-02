@@ -18,11 +18,12 @@ npm run serve:dist
 
 ## Key Features
 
-- 🚀 **Performance** - <100KB total size, sub-second loads
+- 🚀 **Performance** - <100KB total size, sub-second loads, Pino logging
 - 📸 **Multimedia** - Responsive images with WebP, YouTube embeds
 - ♿ **Accessible** - WCAG 2.1 AA compliant with automated auditing
 - 🔒 **Secure** - No tracking, privacy-focused, security headers
 - 📝 **Simple** - Write in Markdown, push to deploy
+- 📊 **Professional Logging** - Structured logging with Pino for debugging
 
 ## Documentation
 
