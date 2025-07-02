@@ -6,6 +6,12 @@ const markdownItContainer = require('markdown-it-container');
 const fm = require('front-matter');
 const { format } = require('date-fns');
 const sharp = require('sharp');
+const { logger, createLogger } = require('../utils/logger');
+
+// Create build-specific logger with context
+const buildLogger = createLogger({
+  context: { module: 'build-multimedia' }
+});
 
 // Initialize markdown parser with multimedia support
 const md = new MarkdownIt({
@@ -69,6 +75,7 @@ async function processPostImages(postDir, slug) {
   const outputImagesDir = path.join(config.outputDir, 'articles', slug, 'images');
   
   if (!fs.existsSync(imagesDir)) {
+    buildLogger.debug('No images directory found', { postDir, slug });
     return;
   }
   
@@ -77,9 +84,25 @@ async function processPostImages(postDir, slug) {
   const imageFiles = fs.readdirSync(imagesDir)
     .filter(file => /\.(jpg|jpeg|png|webp)$/i.test(file));
   
+  buildLogger.info(`Processing ${imageFiles.length} images`, { slug, images: imageFiles });
+  
   for (const imageFile of imageFiles) {
     const inputPath = path.join(imagesDir, imageFile);
     const baseName = path.basename(imageFile, path.extname(imageFile));
+    
+    // Get original image metadata for better error reporting
+    let metadata;
+    try {
+      metadata = await sharp(inputPath).metadata();
+      buildLogger.trace('Image metadata', { file: imageFile, metadata });
+    } catch (err) {
+      buildLogger.error('Failed to read image metadata', { 
+        file: imageFile, 
+        error: err,
+        suggestion: 'Ensure the file is a valid image format'
+      });
+      continue;
+    }
     
     // Generate multiple sizes and formats
     for (const width of config.imageSizes) {
@@ -98,16 +121,51 @@ async function processPostImages(postDir, slug) {
             })
             .toFile(outputPath);
           
-          console.log(`  Generated: ${outputName}`);
+          const stats = fs.statSync(outputPath);
+          buildLogger.debug('Generated image variant', {
+            input: imageFile,
+            output: outputName,
+            width,
+            format,
+            size: stats.size,
+            originalSize: metadata.size,
+            reduction: `${Math.round((1 - stats.size / metadata.size) * 100)}%`
+          });
         } catch (err) {
-          console.error(`  Error processing ${imageFile}: ${err.message}`);
+          buildLogger.error('Image processing failed', {
+            file: imageFile,
+            targetWidth: width,
+            targetFormat: format,
+            error: err,
+            originalDimensions: `${metadata.width}x${metadata.height}`,
+            suggestion: getImageProcessingSuggestion(err, metadata, width, format)
+          });
         }
       }
     }
     
     // Copy original as fallback
-    fs.copyFileSync(inputPath, path.join(outputImagesDir, imageFile));
+    try {
+      fs.copyFileSync(inputPath, path.join(outputImagesDir, imageFile));
+      buildLogger.trace('Copied original image as fallback', { file: imageFile });
+    } catch (err) {
+      buildLogger.error('Failed to copy original image', { file: imageFile, error: err });
+    }
   }
+}
+
+// Helper function to provide better error suggestions
+function getImageProcessingSuggestion(err, metadata, targetWidth, targetFormat) {
+  if (err.message.includes('unsupported image format')) {
+    return `Image format ${metadata.format} may not be supported. Try converting to JPEG or PNG first.`;
+  }
+  if (err.message.includes('memory')) {
+    return `Image too large (${metadata.width}x${metadata.height}). Consider reducing the original image size.`;
+  }
+  if (targetWidth > metadata.width) {
+    return `Target width ${targetWidth} exceeds original width ${metadata.width}. Image will not be enlarged.`;
+  }
+  return 'Check Sharp documentation for this specific error.';
 }
 
 // Custom image renderer for responsive images
@@ -158,48 +216,74 @@ md.renderer.rules.image = function(tokens, idx, options, env, renderer) {
 
 // Read and parse markdown file (updated for new structure)
 async function parseMarkdownFile(filePath) {
+  const fileLogger = buildLogger.withContext({ operation: 'parseMarkdown', file: filePath });
+  
   let content, markdownPath;
   
   // Check if it's a directory with index.md or a standalone .md file
   if (fs.statSync(filePath).isDirectory()) {
     markdownPath = path.join(filePath, 'index.md');
     if (!fs.existsSync(markdownPath)) {
+      fileLogger.warn('Directory missing index.md', { directory: filePath });
       return null;
     }
   } else {
     markdownPath = filePath;
   }
   
-  content = fs.readFileSync(markdownPath, 'utf8');
-  const { attributes, body } = fm(content);
-  
-  const slug = fs.statSync(filePath).isDirectory() 
-    ? path.basename(filePath)
-    : path.basename(filePath, '.md');
-  
-  // Process images if post is in a directory
-  if (fs.statSync(filePath).isDirectory()) {
-    await processPostImages(filePath, slug);
+  content = fileLogger.tryReadFile(markdownPath);
+  if (!content) {
+    return null;
   }
   
-  return {
-    ...attributes,
-    content: md.render(body),
-    slug: slug,
-    filename: filePath
-  };
+  try {
+    const { attributes, body } = fm(content);
+    
+    const slug = fs.statSync(filePath).isDirectory() 
+      ? path.basename(filePath)
+      : path.basename(filePath, '.md');
+    
+    fileLogger.debug('Parsed markdown file', { 
+      slug, 
+      title: attributes.title,
+      date: attributes.date,
+      hasContent: body.length > 0
+    });
+    
+    // Process images if post is in a directory
+    if (fs.statSync(filePath).isDirectory()) {
+      await processPostImages(filePath, slug);
+    }
+    
+    return {
+      ...attributes,
+      content: md.render(body),
+      slug: slug,
+      filename: filePath
+    };
+  } catch (err) {
+    fileLogger.error('Failed to parse markdown', { 
+      error: err,
+      suggestion: 'Check front-matter syntax and ensure valid YAML'
+    });
+    return null;
+  }
 }
 
 // Get all posts (updated for new structure)
 async function getAllPosts() {
+  const postsLogger = buildLogger.withContext({ operation: 'getAllPosts' });
+  
   if (!fs.existsSync(config.postsDir)) {
-    console.log(`Posts directory ${config.postsDir} not found. Creating it...`);
+    postsLogger.info('Posts directory not found, creating it', { dir: config.postsDir });
     ensureDir(config.postsDir);
     return [];
   }
 
   const items = fs.readdirSync(config.postsDir);
   const posts = [];
+  
+  postsLogger.debug('Found items in posts directory', { count: items.length, items });
   
   for (const item of items) {
     const itemPath = path.join(config.postsDir, item);
@@ -216,6 +300,11 @@ async function getAllPosts() {
   
   // Sort by date
   posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  postsLogger.info('Loaded and sorted posts', { 
+    total: posts.length,
+    titles: posts.map(p => p.title)
+  });
   
   return posts;
 }
@@ -236,27 +325,48 @@ function renderTemplate(templateName, data) {
 
 // Generate individual post page
 function generatePostPage(post) {
+  const pageLogger = buildLogger.withContext({ 
+    operation: 'generatePostPage', 
+    slug: post.slug 
+  });
+  
   const outputPath = path.join(config.outputDir, 'articles', post.slug, 'index.html');
   ensureDir(path.dirname(outputPath));
   
-  const html = renderTemplate('post', {
-    title: post.title,
-    date: format(new Date(post.date), 'MMM d, yyyy'),
-    content: post.content,
-    description: post.description || post.title,
-    url: `${config.siteUrl}/articles/${post.slug}/`
-  });
-  
-  fs.writeFileSync(outputPath, html);
-  console.log(`Generated: ${outputPath}`);
+  try {
+    const html = renderTemplate('post', {
+      title: post.title,
+      date: format(new Date(post.date), 'MMM d, yyyy'),
+      content: post.content,
+      description: post.description || post.title,
+      url: `${config.siteUrl}/articles/${post.slug}/`
+    });
+    
+    fs.writeFileSync(outputPath, html);
+    const stats = fs.statSync(outputPath);
+    
+    pageLogger.debug('Generated post page', { 
+      title: post.title,
+      size: stats.size,
+      path: outputPath
+    });
+  } catch (err) {
+    pageLogger.error('Failed to generate post page', { 
+      title: post.title,
+      error: err 
+    });
+  }
 }
 
 // Generate articles archive page
 function generateArchivePage(posts) {
+  const archiveLogger = buildLogger.withContext({ operation: 'generateArchivePage' });
+  
   const outputPath = path.join(config.outputDir, 'articles', 'index.html');
   ensureDir(path.dirname(outputPath));
   
-  const articlesHtml = posts.map(post => `
+  try {
+    const articlesHtml = posts.map(post => `
     <article class="archive-article">
       <h2 class="archive-title">
         <a href="/articles/${post.slug}/">${post.title}</a>
@@ -267,25 +377,31 @@ function generateArchivePage(posts) {
       </p>
     </article>
   `).join('');
-  
-  const html = renderTemplate('archive', {
-    articles: articlesHtml,
-    title: 'All Articles',
-    description: 'Articles about cybersecurity, Azure, Microsoft 365, threat hunting, and cloud security'
-  });
-  
-  fs.writeFileSync(outputPath, html);
-  console.log(`Generated: ${outputPath}`);
+    
+    const html = renderTemplate('archive', {
+      articles: articlesHtml,
+      title: 'All Articles',
+      description: 'Articles about cybersecurity, Azure, Microsoft 365, threat hunting, and cloud security'
+    });
+    
+    fs.writeFileSync(outputPath, html);
+    archiveLogger.info('Generated archive page', { postCount: posts.length });
+  } catch (err) {
+    archiveLogger.error('Failed to generate archive page', { error: err });
+  }
 }
 
 // Generate homepage with integrated blog content
 function generateHomepage(posts) {
+  const homepageLogger = buildLogger.withContext({ operation: 'generateHomepage' });
+  
   const outputPath = path.join(config.outputDir, 'index.html');
   ensureDir(path.dirname(outputPath));
   
-  // Featured posts (first 3)
-  const featuredPosts = posts.slice(0, 3);
-  const featuredHtml = featuredPosts.map(post => `
+  try {
+    // Featured posts (first 3)
+    const featuredPosts = posts.slice(0, 3);
+    const featuredHtml = featuredPosts.map(post => `
     <article class="featured-post">
       <h3 class="post-title">
         <a href="/articles/${post.slug}/">${post.title}</a>
@@ -297,10 +413,10 @@ function generateHomepage(posts) {
       <a href="/articles/${post.slug}/" class="read-more-link">Read more →</a>
     </article>
   `).join('');
-  
-  // Recent articles (first 5)
-  const recentPosts = posts.slice(0, 5);
-  const recentHtml = recentPosts.map(post => `
+    
+    // Recent articles (first 5)
+    const recentPosts = posts.slice(0, 5);
+    const recentHtml = recentPosts.map(post => `
     <article class="article-preview">
       <h3 class="article-title">
         <a href="/articles/${post.slug}/">${post.title}</a>
@@ -311,23 +427,32 @@ function generateHomepage(posts) {
       </p>
     </article>
   `).join('');
-  
-  const html = renderTemplate('index', {
-    featuredPosts: featuredHtml,
-    recentArticles: recentHtml,
-    title: 'Jayanth Kumar - Security Consultant',
-    description: config.siteDescription
-  });
-  
-  fs.writeFileSync(outputPath, html);
-  console.log(`Generated: ${outputPath}`);
+    
+    const html = renderTemplate('index', {
+      featuredPosts: featuredHtml,
+      recentArticles: recentHtml,
+      title: 'Jayanth Kumar - Security Consultant',
+      description: config.siteDescription
+    });
+    
+    fs.writeFileSync(outputPath, html);
+    homepageLogger.info('Generated homepage', { 
+      featuredCount: featuredPosts.length,
+      recentCount: recentPosts.length 
+    });
+  } catch (err) {
+    homepageLogger.error('Failed to generate homepage', { error: err });
+  }
 }
 
 // Generate RSS feed
 function generateRSSFeed(posts) {
+  const rssLogger = buildLogger.withContext({ operation: 'generateRSSFeed' });
+  
   const outputPath = path.join(config.outputDir, 'rss.xml');
   
-  const items = posts.map(post => `
+  try {
+    const items = posts.map(post => `
     <item>
       <title><![CDATA[${post.title}]]></title>
       <link>${config.siteUrl}/articles/${post.slug}/</link>
@@ -336,8 +461,8 @@ function generateRSSFeed(posts) {
       <description><![CDATA[${post.description || post.excerpt || ''}]]></description>
     </item>
   `).join('');
-  
-  const rss = `<?xml version="1.0" encoding="UTF-8"?>
+    
+    const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>${config.siteName}</title>
@@ -349,13 +474,18 @@ function generateRSSFeed(posts) {
     ${items}
   </channel>
 </rss>`;
-  
-  fs.writeFileSync(outputPath, rss);
-  console.log(`Generated: ${outputPath}`);
+    
+    fs.writeFileSync(outputPath, rss);
+    rssLogger.info('Generated RSS feed', { postCount: posts.length });
+  } catch (err) {
+    rssLogger.error('Failed to generate RSS feed', { error: err });
+  }
 }
 
 // Copy static assets
 function copyStaticAssets() {
+  const assetsLogger = buildLogger.withContext({ operation: 'copyStaticAssets' });
+  
   const staticFiles = [
     path.join(__dirname, '../../styles/styles.css'),
     path.join(__dirname, '../../styles/archive-styles.css'), 
@@ -364,43 +494,74 @@ function copyStaticAssets() {
   
   staticFiles.forEach(file => {
     if (fs.existsSync(file)) {
-      const basename = path.basename(file);
-      fs.copyFileSync(file, path.join(config.outputDir, basename));
-      console.log(`Copied: ${basename}`);
+      try {
+        const basename = path.basename(file);
+        fs.copyFileSync(file, path.join(config.outputDir, basename));
+        const stats = fs.statSync(file);
+        assetsLogger.debug('Copied static asset', { 
+          file: basename, 
+          size: stats.size 
+        });
+      } catch (err) {
+        assetsLogger.error('Failed to copy static asset', { 
+          file: path.basename(file), 
+          error: err 
+        });
+      }
+    } else {
+      assetsLogger.warn('Static asset not found', { file: path.basename(file) });
     }
   });
 }
 
 // Main build function
 async function build() {
-  console.log('🚀 Building site with multimedia support...');
+  const mainLogger = buildLogger.withContext({ operation: 'build' });
+  
+  mainLogger.info('🚀 Building site with multimedia support...');
+  mainLogger.time('totalBuildTime');
   
   // Ensure output directory exists
   ensureDir(config.outputDir);
   ensureDir(config.templatesDir);
   
   // Get all posts
+  mainLogger.time('loadPosts');
   const posts = await getAllPosts();
-  console.log(`Found ${posts.length} posts`);
+  mainLogger.timeEnd('loadPosts');
+  mainLogger.info(`Found ${posts.length} posts`);
   
   // Generate pages
-  posts.forEach(generatePostPage);
+  const pageGroup = mainLogger.group('Generating pages');
+  posts.forEach((post, index) => {
+    mainLogger.progress(index + 1, posts.length, 'Generating posts');
+    generatePostPage(post);
+  });
   generateArchivePage(posts);
   generateHomepage(posts);
   generateRSSFeed(posts);
+  pageGroup.end();
   
   // Copy static assets
   copyStaticAssets();
   
-  console.log('✅ Build complete!');
-  console.log(`📁 Output: ${config.outputDir}`);
-  console.log(`🔗 Preview: http://localhost:8000`);
+  const totalTime = mainLogger.timeEnd('totalBuildTime');
+  
+  mainLogger.info('✅ Build complete!', {
+    duration: `${totalTime}ms`,
+    outputDir: config.outputDir,
+    posts: posts.length,
+    preview: 'http://localhost:8000'
+  });
 }
 
 // Run build
 if (require.main === module) {
   build().catch(err => {
-    console.error('Build failed:', err);
+    buildLogger.error('Build failed', { 
+      error: err,
+      suggestion: 'Check the error details above and ensure all dependencies are installed'
+    });
     process.exit(1);
   });
 }
