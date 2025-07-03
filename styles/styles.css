@@ -1,3 +1,5 @@
+@import url("design-tokens.css");
+
 /* ===================================================================
    CSS Custom Properties (Variables)
    =================================================================== */
@@ -96,6 +98,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   line-height: 1.2;
   margin-bottom: var(--space-md);
+  font-family: var(--font-family-sans);
 }
 
 h1 {
@@ -239,6 +242,20 @@ pre code {
   .site-header {
     padding: var(--space-xxl) 0 var(--space-xl) 0;
   }
+}
+
+.theme-toggle {
+  margin-left: var(--space-sm);
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: var(--color-accent);
+}
+
+.theme-toggle:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 /* ===================================================================
@@ -560,4 +577,18 @@ section:last-of-type {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ===================================================================
+   Hero Banner Placeholder
+   =================================================================== */
+.hero-banner {
+  padding: var(--space-xxl) 0;
+  background-color: var(--color-surface);
+  text-align: center;
+}
+.hero-tagline {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--color-text);
 }
