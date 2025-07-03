@@ -494,12 +494,10 @@ function copyStaticAssets() {
     path.join(__dirname, '../../styles/styles.css'),
     path.join(__dirname, '../../styles/archive-styles.css'), 
     path.join(__dirname, '../../styles/multimedia-styles.css'),
-<<<<<<< HEAD
-    path.join(__dirname, '../../styles/components/carousel.css')
-=======
+    path.join(__dirname, '../../styles/components/carousel.css'),
     path.join(__dirname, '../../styles/design-tokens.css'), 
     path.join(__dirname, '../../scripts/theme-toggle.js'),
->>>>>>> origin/feature/visual-foundation
+    path.join(__dirname, '../../scripts/utils/carousel.js'),
   ];
   
   staticFiles.forEach(file => {
