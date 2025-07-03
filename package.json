@@ -7,7 +7,7 @@
     "build": "node scripts/build/build.js",
     "build:multimedia": "node scripts/build/build-multimedia.js",
     "optimize": "node scripts/utils/optimize.js",
-    "audit": "node scripts/utils/accessibility-audit.js",
+    "audit": "node scripts/utils/accessibility-audit.js && npm run check:contrast && npm run check:css-budget",
     "build:prod": "npm run build:multimedia && npm run optimize && npm run audit",
     "dev": "npm run build:multimedia && npm run serve",
     "serve": "python3 -m http.server 8000",
@@ -16,7 +16,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "jest",
-    "check:css-budget": "node scripts/utils/check-css-budget.js"
+    "check:css-budget": "node scripts/utils/check-css-budget.js",
+    "check:contrast": "node scripts/utils/check-contrast.js"
   },
   "devDependencies": {
     "csso": "^5.0.5",
