@@ -7,6 +7,7 @@ Welcome to the Personal Website project documentation. This directory contains a
 ### 🚀 Getting Started
 - [Setup Guide](./guides/SETUP.md) - Installation and configuration
 - [Usage Guide](./guides/USAGE.md) - How to create content and use features
+- [Gallery Usage Guide](./guides/GALLERY_USAGE.md) - How to use image galleries and carousels
 - [Deployment Guide](./guides/DEPLOYMENT.md) - Deploy to production
 
 ### 📚 Technical Documentation

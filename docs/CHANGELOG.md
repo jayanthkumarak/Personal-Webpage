@@ -1,5 +1,35 @@
 # Changelog
 
+## [2025-01-09] Image Gallery and Carousel Implementation
+
+### Added
+- **Image Carousel Component**
+  - Responsive carousel with touch/swipe support
+  - Keyboard navigation (arrow keys, Home, End)
+  - Dot indicators for direct slide access
+  - Previous/Next navigation buttons
+  - Smooth animations with reduced motion support
+  - Full accessibility with ARIA labels
+- **Grid Gallery Layout**
+  - Responsive grid layout option
+  - Hover effects and transitions
+  - Always-visible captions
+- **Markdown Gallery Syntax**
+  - Simple `:::gallery` container syntax
+  - Support for both carousel and grid layouts
+  - Seamless integration with existing image processing
+- **Gallery Documentation**
+  - Comprehensive usage guide at `/docs/guides/GALLERY_USAGE.md`
+  - Examples and best practices
+  - Troubleshooting section
+
+### Technical Implementation
+- Custom markdown-it plugin for gallery parsing
+- Pure CSS and vanilla JavaScript (no dependencies)
+- Progressive enhancement approach
+- Maintains performance budget (<15KB CSS)
+- Works with existing responsive image pipeline
+
 ## [2025-01-08] Professional Logging Implementation
 
 ### Added

@@ -7,6 +7,7 @@ const fm = require('front-matter');
 const { format } = require('date-fns');
 const sharp = require('sharp');
 const { logger, createLogger } = require('../utils/logger');
+const galleryPlugin = require('../utils/markdown-gallery-plugin');
 
 // Create build-specific logger with context
 const buildLogger = createLogger({
@@ -24,6 +25,9 @@ const md = new MarkdownIt({
     symbol: '#',
     renderAttrs: () => ({ 'aria-hidden': 'true' })
   })
+})
+.use(galleryPlugin, {
+  imageSizes: [400, 800, 1200]
 })
 .use(markdownItContainer, 'youtube', {
   validate: function(params) {
@@ -489,7 +493,8 @@ function copyStaticAssets() {
   const staticFiles = [
     path.join(__dirname, '../../styles/styles.css'),
     path.join(__dirname, '../../styles/archive-styles.css'), 
-    path.join(__dirname, '../../styles/multimedia-styles.css')
+    path.join(__dirname, '../../styles/multimedia-styles.css'),
+    path.join(__dirname, '../../styles/components/carousel.css')
   ];
   
   staticFiles.forEach(file => {
