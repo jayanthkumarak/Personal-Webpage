@@ -6,8 +6,8 @@
 /* Container */
 .image-carousel {
   position: relative;
-  margin: 2rem 0;
-  background: var(--color-background, #ffffff);
+  margin: var(--space-lg) 0;
+  background: var(--color-background);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -43,7 +43,7 @@
   height: auto;
   max-height: 70vh;
   object-fit: contain;
-  background: var(--color-surface-light, #f8f8f8);
+  background: var(--color-surface);
 }
 
 /* Caption */
@@ -52,10 +52,10 @@
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 1rem 1.5rem;
+  padding: var(--space-sm) var(--space-md);
   background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
   color: white;
-  font-size: 0.875rem;
+  font-size: var(--font-size-small);
   line-height: 1.4;
   opacity: 0;
   transform: translateY(10px);
@@ -93,7 +93,7 @@
 }
 
 .carousel-button:focus {
-  outline: 2px solid var(--color-accent, #A98BFF);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
@@ -113,17 +113,17 @@
 .carousel-button svg {
   width: 24px;
   height: 24px;
-  color: var(--color-text, #333);
+  color: var(--color-text);
 }
 
 /* Indicators */
 .carousel-indicators {
   position: absolute;
-  bottom: 1rem;
+  bottom: var(--space-sm);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-xs);
   z-index: 2;
 }
 
@@ -160,7 +160,7 @@
 .image-carousel[data-gallery-type="grid"] .carousel-track {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
+  gap: var(--space-sm);
   transition: none;
 }
 
@@ -184,9 +184,9 @@
 
 .image-carousel[data-gallery-type="grid"] .carousel-caption {
   position: static;
-  padding: 0.75rem;
-  background: var(--color-surface-light, #f8f8f8);
-  color: var(--color-text, #333);
+  padding: var(--space-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
   opacity: 1;
   transform: none;
 }
@@ -228,26 +228,15 @@
   }
 }
 
-/* Dark Mode Support (when implemented) */
+/* Dark Mode Support - Now handled by design tokens */
 @media (prefers-color-scheme: dark) {
-  .image-carousel {
-    background: var(--color-background-dark, #1a1a1a);
-  }
-  
-  .carousel-slide img {
-    background: var(--color-surface-dark, #2a2a2a);
-  }
-  
   .carousel-button {
-    background: rgba(30, 30, 30, 0.9);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
   }
   
   .carousel-button:hover {
-    background: rgba(40, 40, 40, 0.95);
-  }
-  
-  .carousel-button svg {
-    color: var(--color-text-dark, #e0e0e0);
+    background: rgba(255, 255, 255, 0.2);
   }
   
   .carousel-indicator {
@@ -255,6 +244,6 @@
   }
   
   .carousel-indicator.active {
-    background: var(--color-accent, #A98BFF);
+    background: var(--color-accent);
   }
 }
