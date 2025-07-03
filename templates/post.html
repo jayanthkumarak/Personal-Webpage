@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+THIS SHOULD BE A LINTER ERROR<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -21,11 +21,20 @@
     
     <link rel="preload" href="/styles.css" as="style">
     <link rel="preload" href="/archive-styles.css" as="style">
+    <link rel="preload" href="/multimedia-styles.css" as="style">
+    <link rel="preload" href="/carousel.css" as="style">
     <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="/archive-styles.css">
+    <link rel="stylesheet" href="/multimedia-styles.css">
+    <link rel="stylesheet" href="/carousel.css">
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="alternate" type="application/rss+xml" title="Jayanth Kumar - Articles" href="/rss.xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" href="/design-tokens.css" as="style">
+    <link rel="stylesheet" href="/design-tokens.css">
 </head>
 <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -34,6 +43,7 @@
         <div class="container">
             <nav aria-label="Breadcrumb">
                 <a href="/" class="back-link">← Back to Home</a>
+                <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">🌓</button>
             </nav>
         </div>
     </header>
@@ -71,6 +81,134 @@
             </p>
         </div>
     </footer>
+
+    <script src="/theme-toggle.js" defer></script>
+    <script>
+    // Image Carousel Component
+    class ImageCarousel {
+      constructor(element) {
+        this.carousel = element;
+        this.track = element.querySelector('.carousel-track');
+        this.slides = Array.from(element.querySelectorAll('.carousel-slide'));
+        this.prevButton = element.querySelector('.carousel-button--prev');
+        this.nextButton = element.querySelector('.carousel-button--next');
+        this.indicatorContainer = element.querySelector('.carousel-indicators');
+        
+        this.currentIndex = 0;
+        this.touchStartX = 0;
+        this.touchEndX = 0;
+        
+        if (this.slides.length > 0 && this.carousel.dataset.galleryType !== 'grid') {
+          this.init();
+        }
+      }
+      
+      init() {
+        this.createIndicators();
+        this.prevButton?.addEventListener('click', () => this.goToPrevious());
+        this.nextButton?.addEventListener('click', () => this.goToNext());
+        this.carousel.addEventListener('keydown', (e) => this.handleKeydown(e));
+        this.track.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: true });
+        this.track.addEventListener('touchend', (e) => this.handleTouchEnd(e));
+        this.updateCarousel();
+      }
+      
+      createIndicators() {
+        if (!this.indicatorContainer) return;
+        this.slides.forEach((_, index) => {
+          const indicator = document.createElement('button');
+          indicator.classList.add('carousel-indicator');
+          indicator.setAttribute('aria-label', `Go to slide ${index + 1}`);
+          indicator.addEventListener('click', () => this.goToSlide(index));
+          this.indicatorContainer.appendChild(indicator);
+        });
+        this.indicators = Array.from(this.indicatorContainer.querySelectorAll('.carousel-indicator'));
+      }
+      
+      goToSlide(index) {
+        this.currentIndex = Math.max(0, Math.min(index, this.slides.length - 1));
+        this.updateCarousel();
+      }
+      
+      goToPrevious() {
+        this.currentIndex = this.currentIndex > 0 ? this.currentIndex - 1 : this.slides.length - 1;
+        this.updateCarousel();
+      }
+      
+      goToNext() {
+        this.currentIndex = this.currentIndex < this.slides.length - 1 ? this.currentIndex + 1 : 0;
+        this.updateCarousel();
+      }
+      
+      updateCarousel() {
+        const offset = -this.currentIndex * 100;
+        this.track.style.transform = `translateX(${offset}%)`;
+        
+        if (this.prevButton && this.nextButton) {
+          this.prevButton.disabled = this.currentIndex === 0;
+          this.nextButton.disabled = this.currentIndex === this.slides.length - 1;
+        }
+        
+        this.indicators?.forEach((indicator, index) => {
+          indicator.classList.toggle('active', index === this.currentIndex);
+          indicator.setAttribute('aria-pressed', index === this.currentIndex);
+        });
+        
+        this.slides.forEach((slide, index) => {
+          slide.setAttribute('aria-hidden', index !== this.currentIndex);
+        });
+      }
+      
+      handleKeydown(e) {
+        switch (e.key) {
+          case 'ArrowLeft':
+            e.preventDefault();
+            this.goToPrevious();
+            break;
+          case 'ArrowRight':
+            e.preventDefault();
+            this.goToNext();
+            break;
+          case 'Home':
+            e.preventDefault();
+            this.goToSlide(0);
+            break;
+          case 'End':
+            e.preventDefault();
+            this.goToSlide(this.slides.length - 1);
+            break;
+        }
+      }
+      
+      handleTouchStart(e) {
+        this.touchStartX = e.changedTouches[0].screenX;
+      }
+      
+      handleTouchEnd(e) {
+        this.touchEndX = e.changedTouches[0].screenX;
+        this.handleSwipe();
+      }
+      
+      handleSwipe() {
+        const swipeThreshold = 50;
+        const diff = this.touchStartX - this.touchEndX;
+        
+        if (Math.abs(diff) > swipeThreshold) {
+          if (diff > 0) {
+            this.goToNext();
+          } else {
+            this.goToPrevious();
+          }
+        }
+      }
+    }
+    
+    // Initialize carousels when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      const carousels = document.querySelectorAll('.image-carousel');
+      carousels.forEach(carousel => new ImageCarousel(carousel));
+    });
+    </script>
 
 </body>
 </html>

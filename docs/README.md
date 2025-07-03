@@ -7,12 +7,14 @@ Welcome to the Personal Website project documentation. This directory contains a
 ### 🚀 Getting Started
 - [Setup Guide](./guides/SETUP.md) - Installation and configuration
 - [Usage Guide](./guides/USAGE.md) - How to create content and use features
+- [Gallery Usage Guide](./guides/GALLERY_USAGE.md) - How to use image galleries and carousels
 - [Deployment Guide](./guides/DEPLOYMENT.md) - Deploy to production
 
 ### 📚 Technical Documentation
 - [Architecture Overview](./technical/ARCHITECTURE.md) - System design and components
 - [Build System](./technical/BUILD_SYSTEM.md) - How the static site generator works
 - [Multimedia Support](./technical/MULTIMEDIA.md) - Image and video implementation
+- - [Design Tokens](./technical/DESIGN_TOKENS.md) - Colour & typography variables
 - [Logging System](./technical/LOGGING.md) - Error reporting and debugging
 - [Project Structure](./PROJECT_STRUCTURE.md) - Directory organization and conventions
 
