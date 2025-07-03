@@ -15,7 +15,8 @@
     "clean": "rm -rf dist/*",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "jest"
+    "test": "jest",
+    "check:css-budget": "node scripts/utils/check-css-budget.js"
   },
   "devDependencies": {
     "csso": "^5.0.5",
