@@ -1,5 +1,7 @@
-THIS SHOULD BE A LINTER ERROR/* Image Carousel Component
+/* Image Carousel Component
    ========================================================================== */
+
+@import url("/design-tokens.css");
 
 /* Container */
 .image-carousel {
