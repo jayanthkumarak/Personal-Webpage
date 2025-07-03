@@ -1,0 +1,97 @@
+/* ===================================================================
+   Design Tokens – Phase 2 Visual Foundation
+   =================================================================== */
+
+:root {
+  /* Typography */
+  --font-family-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-family-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+
+  /* Base font family (body text) */
+  --font-family-base: var(--font-family-serif);
+
+  /* Font Sizes – Mobile First */
+  --font-size-small: 0.875rem;   /* 14px */
+  --font-size-base: 1.125rem;    /* 18px */
+  --font-size-large: 1.25rem;    /* 20px */
+  --font-size-xl: 1.5rem;        /* 24px */
+  --font-size-xxl: 2rem;         /* 32px */
+  --font-size-xxxl: 2.5rem;      /* 40px */
+
+  /* Colour Palette – Light Theme */
+  --color-text: #08040A;
+  --color-background: #ffffff;
+  --color-surface: #F9F7F4;      /* subtle cream */
+  --color-border: #e5e0da;
+  --color-accent: #A98BFF;       /* light-purple primary */
+  --color-accent-hover: #6B46FF; /* deeper hover state */
+  --color-muted: #675C7A;        /* muted purple-grey */
+  --color-light: #F3F0FF;        /* lavender tint */
+
+  /* Spacing Scale */
+  --space-xs: 0.5rem;  /* 8px */
+  --space-sm: 1rem;    /* 16px */
+  --space-md: 1.5rem;  /* 24px */
+  --space-lg: 2rem;    /* 32px */
+  --space-xl: 3rem;    /* 48px */
+  --space-xxl: 4rem;   /* 64px */
+  --space-xxxl: 6rem;  /* 96px */
+
+  /* Layout */
+  --container-max-width: 800px;
+  --container-padding: var(--space-md);
+}
+
+/* Desktop type-scale overrides */
+@media (min-width: 768px) {
+  :root {
+    --font-size-base: 1.25rem;   /* 20px */
+    --font-size-large: 1.5rem;   /* 24px */
+    --font-size-xl: 2rem;        /* 32px */
+    --font-size-xxl: 2.5rem;     /* 40px */
+    --font-size-xxxl: 3rem;      /* 48px */
+    --container-padding: var(--space-lg);
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --container-padding: var(--space-xl);
+  }
+}
+
+/* Dark Theme (prefers-color-scheme) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text: #F1EFF6;
+    --color-background: #070509;
+    --color-surface: #1A1523;
+    --color-border: #2C253B;
+    --color-accent: #C5B1FF;
+    --color-accent-hover: #DBC8FF;
+    --color-muted: #9B94B5;
+    --color-light: #1A1523;
+  }
+}
+
+/* Manual theme override using [data-theme] attribute */
+html[data-theme='light'] {
+  --color-text: #08040A;
+  --color-background: #ffffff;
+  --color-surface: #F9F7F4;
+  --color-border: #e5e0da;
+  --color-accent: #A98BFF;
+  --color-accent-hover: #6B46FF;
+  --color-muted: #675C7A;
+}
+
+html[data-theme='dark'] {
+  --color-text: #F1EFF6;
+  --color-background: #070509;
+  --color-surface: #1A1523;
+  --color-border: #2C253B;
+  --color-accent: #C5B1FF;
+  --color-accent-hover: #DBC8FF;
+  --color-muted: #9B94B5;
+}

@@ -203,7 +203,9 @@ function generateRSSFeed(posts) {
 function copyStaticAssets() {
   const staticFiles = [
     path.join(__dirname, '../../styles/styles.css'),
-    path.join(__dirname, '../../styles/archive-styles.css')
+    path.join(__dirname, '../../styles/archive-styles.css'),
+    path.join(__dirname, '../../styles/design-tokens.css'),
+    path.join(__dirname, '../../scripts/theme-toggle.js')
   ];
   
   staticFiles.forEach(file => {
